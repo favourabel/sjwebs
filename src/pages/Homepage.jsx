@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 // Assets
 import SJ from "../assets/SJ.jpeg";
 import AI from "../assets/AI.jpg";
-import Navbar from "../component/Navbar";
 
 
 // Icons - Organized by category
@@ -407,7 +406,7 @@ const skills = [
       "Authorization",
       "Bcrypt",
       "Multer",
-      "MVC",
+      "CROS",
       "Socket.io",
     ],
   },
@@ -1044,16 +1043,7 @@ const ServicesSection = () => {
                   />
                 </a>
 
-                <a
-                  href="#contact"
-                  className="group inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-10 py-5 text-lg font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-white/[0.06]"
-                >
-                  <span>Hire Me</span>
-                  <FaEnvelope
-                    className="transition-transform duration-300 group-hover:scale-110"
-                    size={18}
-                  />
-                </a>
+                
               </div>
 
               {/* Trust Indicators */}
@@ -1954,81 +1944,7 @@ export default function Hero() {
         <div className="absolute right-[-100px] top-[-150px] h-[400px] w-[400px] rounded-full bg-blue-600/20 blur-[120px]" />
         <div className="absolute bottom-[-100px] left-[-100px] h-[300px] w-[300px] rounded-full bg-blue-500/10 blur-[120px]" />
 
-        {/* ===== NAVBAR ===== */}
-        <nav className="fixed left-0 top-0 z-50 w-full">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center">
-                <img src={SJ} alt="SJ Logo" className="h-[70px] w-[70px]" />
-              </div>
-              <div>
-                <h1 className="font-bold">SJ Web Solutions</h1>
-                <p className="text-xs text-gray-400">MERN Developer</p>
-              </div>
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden lg:block">
-              <ul className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur-xl">
-                {links.map((link) => (
-                  <li key={link}>
-                    <button
-                      onClick={() => scrollToSection(link)}
-                      className="rounded-full px-5 py-3 text-sm text-gray-300 transition duration-300 hover:bg-blue-600 hover:text-white capitalize"
-                    >
-                      {link}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Hire Me */}
-            <button
-              onClick={() => scrollToSection("contact")}
-              className="hidden rounded-xl bg-blue-600 px-6 py-3 font-semibold transition hover:bg-blue-500 lg:block"
-            >
-              Hire Me
-            </button>
-
-            {/* Mobile */}
-            <button onClick={() => setOpen(!open)} className="lg:hidden">
-              {open ? <HiX size={30} /> : <HiMenu size={30} />}
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {open && (
-            <div className="mx-4 rounded-3xl border border-white/10 bg-slate-900/95 p-6 backdrop-blur-xl lg:hidden">
-              <ul className="space-y-4">
-                {links.map((link) => (
-                  <li key={link}>
-                    <button
-                      onClick={() => {
-                        scrollToSection(link);
-                        setOpen(false);
-                      }}
-                      className="block w-full rounded-xl px-4 py-3 text-left text-gray-300 transition hover:bg-blue-600 hover:text-white capitalize"
-                    >
-                      {link}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => {
-                  scrollToSection("contact");
-                  setOpen(false);
-                }}
-                className="mt-6 w-full rounded-xl bg-blue-600 py-3 font-semibold"
-              >
-                Hire Me
-              </button>
-            </div>
-          )}
-        </nav>
-
+       
         {/* ===== HERO CONTENT ===== */}
         <div className="container mx-auto flex min-h-screen flex-col items-center justify-center gap-16 px-6 pt-32 lg:flex-row">
           {/* LEFT SIDE */}
@@ -2036,7 +1952,7 @@ export default function Hero() {
             <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-blue-500/30 bg-blue-500/5 px-6 py-3">
               <div className="h-3 w-3 rounded-full bg-blue-500"></div>
               <span className="tracking-[4px] text-blue-400">
-                MERN STACK DEVELOPER
+                MERN & React Native DEVELOPER
               </span>
             </div>
 
@@ -2047,14 +1963,14 @@ export default function Hero() {
             </h1>
 
             <h2 className="mt-6 text-2xl text-gray-300">
-              Junior FullStack/MERN And React Native Developer
-            </h2>
+              Junior Full-Stack & Mobile Developer<br/>
+              MERN Stack + React Native.</h2>
 
             <p className="mt-8 max-w-xl text-lg leading-8 text-gray-400">
-              I build modern, responsive and scalable web applications using
-              the MERN stack. Through Sjwebs,i turn ideas into seamless digital
-              experiencess powered by clean code,creative problem-solving,
-              and modern technology
+             I build modern, responsive, and scalable web and mobile applications using
+             the MERN stack and React Native. Through SJ Web Solutions, I turn ideas into 
+             seamless digital experiences powered by clean code, creative problem-
+             solving, and modern technology.
             </p>
 
             {/* Buttons */}
@@ -2163,7 +2079,7 @@ export default function Hero() {
 
                 {/* Floating Badge */}
                 <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 rounded-2xl bg-blue-600 px-6 py-3 shadow-lg shadow-blue-600/30">
-                  <p className="font-semibold">Junior MERN Developer</p>
+                  <p className="font-semibold"> MERN & React Native Developer</p>
                 </div>
               </div>
             </div>
@@ -2181,7 +2097,7 @@ export default function Hero() {
               </h3>
 
               <h4 className="mb-8 text-xl text-gray-300">
-                Junior MERN Stack JavaScript Developer
+                Junior MERN & React Native  JavaScript Developer
               </h4>
 
               <p className="mb-6 leading-8 text-gray-400">

@@ -1,14 +1,23 @@
+// ==================== IMPORTS ====================
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { HiMenu, HiX } from "react-icons/hi";
+import { FaEnvelope } from "react-icons/fa";
 import SJ from "../assets/SJ.jpeg";
 
+// ==================== NAVBAR COMPONENT ====================
 export default function Navbar({ onNavigate }) {
+  // ─── State: Controls mobile menu open/close ───
   const [open, setOpen] = useState(false);
 
+  // ─── Hook: Lets us navigate between pages ───
+  const navigate = useNavigate();
+
+  // ─── Nav links list ───
   const links = ["home", "about", "skills", "projects", "services", "contact"];
 
+  // ─── Smooth scroll to a section on the homepage ───
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -23,7 +32,8 @@ export default function Navbar({ onNavigate }) {
   return (
     <nav className="fixed left-0 top-0 z-50 w-full">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        {/* Logo */}
+        
+        {/* ───── Logo ───── */}
         <button
           onClick={() => scrollToSection("home")}
           className="flex items-center gap-3 transition-transform duration-300 hover:scale-105"
@@ -37,7 +47,7 @@ export default function Navbar({ onNavigate }) {
           </div>
         </button>
 
-        {/* Desktop Menu */}
+        {/* ───── Desktop Menu ───── */}
         <div className="hidden lg:block">
           <ul className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur-xl">
             {links.map((link) => (
@@ -53,21 +63,25 @@ export default function Navbar({ onNavigate }) {
           </ul>
         </div>
 
-        {/* Hire Me Button */}
+        {/* ───── Login Button (Desktop) ───── */}
         <button
-          onClick={() => scrollToSection("contact")}
-          className="hidden rounded-xl bg-blue-600 px-6 py-3 font-semibold transition hover:bg-blue-500 lg:block"
+          onClick={() => navigate("/login")}
+          className="group hidden lg:flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-medium transition-all"
         >
-          Hire Me
+          <span>Login</span>
+          <FaEnvelope
+            className="transition-transform duration-300 group-hover:scale-110"
+            size={18}
+          />
         </button>
 
-        {/* Mobile Menu Toggle */}
-        <button onClick={() => setOpen(!open)} className="lg:hidden">
+        {/* ───── Mobile Menu Toggle ───── */}
+        <button onClick={() => setOpen(!open)} className="lg:hidden text-white">
           {open ? <HiX size={30} /> : <HiMenu size={30} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ───── Mobile Menu ───── */}
       {open && (
         <div className="mx-4 rounded-3xl border border-white/10 bg-slate-900/95 p-6 backdrop-blur-xl lg:hidden">
           <ul className="space-y-4">
@@ -82,14 +96,20 @@ export default function Navbar({ onNavigate }) {
               </li>
             ))}
           </ul>
+
+          {/* ───── Login Button (Mobile) ───── */}
           <button
             onClick={() => {
-              scrollToSection("contact");
+              navigate("/login");
               setOpen(false);
             }}
-            className="mt-6 w-full rounded-xl bg-blue-600 py-3 font-semibold"
+            className="group mt-4 flex w-full items-center justify-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-medium transition-all"
           >
-            Hire Me
+            <span>Login</span>
+            <FaEnvelope
+              className="transition-transform duration-300 group-hover:scale-110"
+              size={18}
+            />
           </button>
         </div>
       )}
