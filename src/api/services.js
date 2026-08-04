@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// Automatically picks live URL if available, else falls back to localhost
+// Base URL — auto-switches between localhost and production
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const API = axios.create({
@@ -10,7 +10,7 @@ const API = axios.create({
   },
 });
 
-// Attach token to every request if present
+// Attach JWT token automatically
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -22,8 +22,10 @@ API.interceptors.request.use((config) => {
 /* ------------------- AUTH ------------------- */
 export const loginAdmin = (formData) => API.post("/auth/login", formData);
 
-/* ------------------- Other Services --------- */
-// export const getProjects = () => API.get("/projects");
-// export const createProject = (data) => API.post("/projects", data);
+/* ------------------- PROJECTS ------------------- */
+export const getProjects = () => API.get("/projects");
+export const createProject = (data) => API.post("/projects", data);
+export const updateProject = (id, data) => API.put(`/projects/${id}`, data);
+export const deleteProject = (id) => API.delete(`/projects/${id}`);
 
 export default API;
