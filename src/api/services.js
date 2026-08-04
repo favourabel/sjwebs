@@ -1,11 +1,29 @@
-import API from "./axios";
+import axios from "axios";
 
-// Auth
-export const loginAdmin = (data) => API.post("/auth/login", data);
+// Automatically picks live URL if available, else falls back to localhost
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// Projects
-export const getProjects = () => API.get("/projects");
-export const getProject = (id) => API.get(`/projects/${id}`);
-export const createProject = (formData) => API.post("/projects", formData);
-export const updateProject = (id, formData) => API.put(`/projects/${id}`, formData);
-export const deleteProject = (id) => API.delete(`/projects/${id}`);
+const API = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Attach token to every request if present
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+/* ------------------- AUTH ------------------- */
+export const loginAdmin = (formData) => API.post("/auth/login", formData);
+
+/* ------------------- Other Services --------- */
+// export const getProjects = () => API.get("/projects");
+// export const createProject = (data) => API.post("/projects", data);
+
+export default API;
