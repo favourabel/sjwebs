@@ -487,21 +487,23 @@ function ProjectList({ onEdit, onAdd }) {
   const [search, setSearch] = useState("");
 
   // Fetch all projects when component loads
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+useEffect(() => {
+  fetchProjects();
+}, []);
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const { data } = await getProjects();
-      setProjects(data);
-    } catch (err) {
-      console.error("Failed to fetch projects:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchProjects = async () => {
+  try {
+    setLoading(true);
+    const { data } = await getProjects();
+    console.log("🔍 FULL RESPONSE:", data);        // ← ADD THIS
+    console.log("🔍 FIRST PROJECT:", data[0]);     // ← ADD THIS
+    setProjects(data);
+  } catch (err) {
+    console.error("Failed to fetch projects:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Delete a project after user confirms
   const handleDelete = async (id) => {
@@ -629,16 +631,17 @@ function ProjectForm({ project, onSaved, onCancel }) {
   // Are we editing an existing project or creating a new one?
   const isEditing = Boolean(project);
 
-  // ─── Form Data State ───
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "Full Stack",
-    date: "",
-    codeUrl: "",
-    liveUrl: "",
-    featured: false,
-  });
+  title: "",
+  description: "",
+  category: "Full Stack",
+  date: "",
+  codeUrl: "",
+  liveUrl: "",
+  backendCodeUrl: "",   // ✅ NEW
+  backendLiveUrl: "",   // ✅ NEW
+  featured: false,
+});
 
   const [technologies, setTechnologies] = useState([]);
   const [techInput, setTechInput] = useState("");
@@ -649,20 +652,22 @@ function ProjectForm({ project, onSaved, onCancel }) {
 
   // Prefill form when editing an existing project
   useEffect(() => {
-    if (project) {
-      setFormData({
-        title: project.title || "",
-        description: project.description || "",
-        category: project.category || "Full Stack",
-        date: project.date || "",
-        codeUrl: project.codeUrl || "",
-        liveUrl: project.liveUrl || "",
-        featured: project.featured || false,
-      });
-      setTechnologies(project.technologies || []);
-      setImagePreview(project.image || null);
-    }
-  }, [project]);
+  if (project) {
+    setFormData({
+      title: project.title || "",
+      description: project.description || "",
+      category: project.category || "Full Stack",
+      date: project.date || "",
+      codeUrl: project.codeUrl || "",
+      liveUrl: project.liveUrl || "",
+      backendCodeUrl: project.backendCodeUrl || "",   
+      backendLiveUrl: project.backendLiveUrl || "",  
+      featured: project.featured || false,
+    });
+    setTechnologies(project.technologies || []);
+    setImagePreview(project.image || null);
+  }
+}, [project]);
 
   // Update form field values
   const handleChange = (e) => {
@@ -710,6 +715,8 @@ function ProjectForm({ project, onSaved, onCancel }) {
       data.append("date", formData.date);
       data.append("codeUrl", formData.codeUrl);
       data.append("liveUrl", formData.liveUrl);
+      data.append("backendCodeUrl", formData.backendCodeUrl);   
+      data.append("backendLiveUrl", formData.backendLiveUrl);  
       data.append("featured", formData.featured);
       data.append("technologies", JSON.stringify(technologies));
       if (imageFile) data.append("image", imageFile);
@@ -845,36 +852,79 @@ function ProjectForm({ project, onSaved, onCancel }) {
             </div>
           </div>
 
-          {/* URLs */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
-                GitHub URL
-              </label>
-              <input
-                type="url"
-                name="codeUrl"
-                value={formData.codeUrl}
-                onChange={handleChange}
-                placeholder="https://github.com/..."
-                className="w-full px-4 py-3 bg-[#111827] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-              />
-            </div>
+        {/* Frontend URLs */}
+<div>
+  <p className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-3">
+    🎨 Frontend Links
+  </p>
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className="block text-slate-300 text-sm font-medium mb-2">
+        Frontend GitHub URL
+      </label>
+      <input
+        type="url"
+        name="codeUrl"
+        value={formData.codeUrl}
+        onChange={handleChange}
+        placeholder="https://github.com/..."
+        className="w-full px-4 py-3 bg-[#111827] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+      />
+    </div>
 
-            <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
-                Live Demo URL
-              </label>
-              <input
-                type="url"
-                name="liveUrl"
-                value={formData.liveUrl}
-                onChange={handleChange}
-                placeholder="https://..."
-                className="w-full px-4 py-3 bg-[#111827] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-              />
-            </div>
-          </div>
+    <div>
+      <label className="block text-slate-300 text-sm font-medium mb-2">
+        Frontend Live URL
+      </label>
+      <input
+        type="url"
+        name="liveUrl"
+        value={formData.liveUrl}
+        onChange={handleChange}
+        placeholder="https://..."
+        className="w-full px-4 py-3 bg-[#111827] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+      />
+    </div>
+  </div>
+</div>
+
+{/* ✅ Backend URLs — only show for Full Stack or Backend projects */}
+{(formData.category === "Full Stack" || formData.category === "Backend") && (
+  <div>
+    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-3">
+      ⚙️ Backend Links (Optional)
+    </p>
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="block text-slate-300 text-sm font-medium mb-2">
+          Backend GitHub URL
+        </label>
+        <input
+          type="url"
+          name="backendCodeUrl"
+          value={formData.backendCodeUrl}
+          onChange={handleChange}
+          placeholder="https://github.com/..."
+          className="w-full px-4 py-3 bg-[#111827] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+        />
+      </div>
+
+      <div>
+        <label className="block text-slate-300 text-sm font-medium mb-2">
+          Backend Live/API URL
+        </label>
+        <input
+          type="url"
+          name="backendLiveUrl"
+          value={formData.backendLiveUrl}
+          onChange={handleChange}
+          placeholder="https://api..."
+          className="w-full px-4 py-3 bg-[#111827] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
           {/* Featured Toggle */}
           <label className="flex items-center gap-3 cursor-pointer group">

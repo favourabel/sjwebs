@@ -483,8 +483,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-white/[0.08] py-6 text-center md:flex-row md:text-left">
+        {/* ==================== BOTTOM BAR — COPYRIGHT ==================== */}
+        <div
+          className={`flex flex-col items-center justify-between gap-3 border-t border-white/[0.08] py-6 text-center transition-all duration-1000 ease-out md:flex-row md:text-left ${
+            footerVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-10 opacity-0"
+          }`}
+          style={{ transitionDelay: "450ms" }}
+        >
           <p className="text-sm text-gray-500">
             © {currentYear}{" "}
             <span className="font-semibold text-gray-300">
@@ -493,28 +500,15 @@ export default function Footer() {
             . All rights reserved.
           </p>
 
-          <p className="flex items-center gap-1.5 text-sm text-gray-500">
-            Designed & Built by
-            <span className="font-semibold text-blue-400">
+          <p className="text-sm text-gray-500">
+            Designed & Developed by{" "}
+            <a
+              href="#home"
+              className="font-medium text-blue-400 transition-colors duration-300 hover:text-blue-300"
+            >
               Osifo Favour Osarunmwnese
-            </span>
+            </a>
           </p>
-
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <a
-              href="#"
-              className="transition-colors duration-300 hover:text-blue-400"
-            >
-              Privacy Policy
-            </a>
-            <span className="text-gray-700">|</span>
-            <a
-              href="#"
-              className="transition-colors duration-300 hover:text-blue-400"
-            >
-              Terms
-            </a>
-          </div>
         </div>
       </div>
 

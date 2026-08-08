@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+import axios from "axios";
+
 // Assets
 import SJ from "../assets/SJ.jpeg";
 import AI from "../assets/AI.jpg";
@@ -35,7 +37,6 @@ import {
   FaFacebookF,
   FaFileDownload,
   FaArrowUp,
-  FaHeart,
   FaHtml5,
   FaCss3Alt,
   FaJs,
@@ -74,66 +75,7 @@ import {
   HiMapPin,
 } from "react-icons/hi2";
 
-// ==================== DATA CONFIGURATION ====================
-
-/**
- * Projects Data
- * Easy to add, remove, or modify projects
- */
-const projectsData = [
-  {
-    id: 1,
-    title: "Unicode - Modern Portfolio",
-    description: "A stunning, responsive portfolio website showcasing projects and skills with modern UI/UX design and smooth animations.",
-    category: "Frontend",
-    date: "2024-01-15",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop",
-    technologies: ["React", "Tailwind CSS", "Framer Motion", "Vite"],
-    githubLink: "https://github.com/favourabel/my-Unicode",
-    liveLink: "https://my-unicode.vercel.app",
-    featured: true,
-    keywords: ["portfolio", "responsive", "animation", "modern design"],
-  },
-  {
-    id: 2,
-    title: "My Travels",
-    description: "An interactive travel diary application to document and share your travel experiences around the world with beautiful UI.",
-    category: "Full Stack",
-    date: "2024-02-20",
-    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop",
-    technologies: ["React", "Node.js", "Express.js", "MongoDB", "Tailwind CSS"],
-    githubLink: "https://github.com/favourabel/my-travels",
-    liveLink: "https://my-travels-chi.vercel.app",
-    featured: true,
-    keywords: ["travel", "blog", "diary", "CRUD", "authentication"],
-  },
-  {
-    id: 3,
-    title: "Dominion Platform",
-    description: "A comprehensive platform for managing church activities, events, and member engagement with role-based access control.",
-    category: "Full Stack",
-    date: "2024-03-10",
-    image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop",
-    technologies: ["React", "Node.js", "Express.js", "MongoDB", "JWT", "Tailwind CSS"],
-    githubLink: "https://github.com/favourabel/my-dominion",
-    liveLink: "https://my-dominion-azf7.vercel.app",
-    featured: false,
-    keywords: ["church", "management", "events", "members", "dashboard"],
-  },
-  {
-    id: 4,
-    title: "Magnific Editing Studio",
-    description: "Built a modern photo and video editing studio using React, Node.js, and Tailwind CSS, featuring an intuitive UI, responsive design, and advanced media editing functionality",
-    category: "Full Stack",
-    date: "2026-05-20",
-    image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=800&auto=format&fit=crop",
-    technologies: ["React", "Node.js", "Express.js", "MongoDB", "Redux", "Tailwind CSS"],
-    githubLink: "https://github.com/favourabel/my-magnific",
-    liveLink: "https://my-magnific.vercel.app",
-    featured: true,
-    keywords: ["editing", "studio", "video", "photo", "design"],
-  },
-];
+// ℹ️ projectsData is now fetched from backend API — see useEffect in Hero component
 
 /**
  * Services Data
@@ -481,10 +423,10 @@ const searchProjects = (projects, searchTerm) => {
 
   return projects.filter(
     (project) =>
-      project.title.toLowerCase().includes(term) ||
-      project.description.toLowerCase().includes(term) ||
-      project.technologies.some((tech) => tech.toLowerCase().includes(term)) ||
-      project.keywords.some((keyword) => keyword.toLowerCase().includes(term))
+      project.title?.toLowerCase().includes(term) ||
+      project.description?.toLowerCase().includes(term) ||
+      (project.technologies || []).some((tech) => tech.toLowerCase().includes(term)) ||
+      (project.keywords || []).some((keyword) => keyword.toLowerCase().includes(term))
   );
 };
 
@@ -1805,15 +1747,6 @@ const Footer = () => {
             . All rights reserved.
           </p>
 
-          <p className="flex items-center gap-1.5 text-sm text-gray-500">
-            Designed & Built with
-            <FaHeart className="animate-pulse text-red-500" size={13} />
-            by{" "}
-            <span className="font-semibold text-blue-400">
-              Osifo Favour Osarunmwnese
-            </span>
-          </p>
-
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <a
               href="#"
@@ -1849,6 +1782,10 @@ export default function Hero() {
   const [open, setOpen] = useState(false);
 
   // Projects State
+  const [projectsData, setProjectsData] = useState([]);          // ✅ NEW - holds fetched projects
+  const [projectsLoading, setProjectsLoading] = useState(true);  // ✅ NEW - loading state
+  const [projectsError, setProjectsError] = useState("");        // ✅ NEW - error state
+
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortType, setSortType] = useState("Newest First");
   const [searchTerm, setSearchTerm] = useState("");
@@ -1884,16 +1821,56 @@ export default function Hero() {
 
   // ==================== EFFECTS ====================
 
+    /**
+ * Fetch projects from backend API on mount
+ */
+useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      setProjectsLoading(true);
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const { data } = await axios.get(`${apiUrl}/projects`);
+
+      // Normalize backend data to match frontend structure
+     const normalized = data.map((p) => ({
+       id: p._id,
+       title: p.title,
+       description: p.description,
+       category: p.category || "Full Stack",
+       date: p.date || p.createdAt,
+       image: p.image,
+       technologies: Array.isArray(p.technologies) ? p.technologies : [],
+       githubLink: p.codeUrl || "",
+       liveLink: p.liveUrl || "",
+       backendGithubLink: p.backendCodeUrl || "",  
+       backendLiveLink: p.backendLiveUrl || "",     
+       featured: p.featured || false,
+       keywords: [],
+       }));
+
+      setProjectsData(normalized);
+      setProjectsError("");
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+      setProjectsError("Failed to load projects. Please try again later.");
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  fetchProjects();
+}, []);
+
   /**
-   * Update displayed projects based on filters
-   */
-  useEffect(() => {
-    let filtered = filterProjects(projectsData, activeCategory);
-    filtered = searchProjects(filtered, searchTerm);
-    filtered = sortProjects(filtered, sortType);
-    setDisplayedProjects(filtered);
-    setVisibleCount(6);
-  }, [activeCategory, sortType, searchTerm]);
+ * Update displayed projects based on filters
+ */
+useEffect(() => {
+  let filtered = filterProjects(projectsData, activeCategory);
+  filtered = searchProjects(filtered, searchTerm);
+  filtered = sortProjects(filtered, sortType);
+  setDisplayedProjects(filtered);
+  setVisibleCount(6);
+}, [activeCategory, sortType, searchTerm, projectsData]);
 
   // ==================== HANDLERS ====================
 
@@ -2339,107 +2316,162 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Projects Grid */}
-          {visibleProjects.length > 0 ? (
-            <>
-              <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-                {visibleProjects.map((project, index) => (
-                  <div
-                    key={project.id}
-                    className="group relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-lg transition-all duration-500 hover:-translate-y-3 hover:border-blue-500 hover:shadow-[0_0_40px_rgba(59,130,246,0.3)]"
-                    style={{
-                      animation: `fadeInUp 0.6s ease-out ${
-                        index * 0.1
-                      }s both`,
-                    }}
-                  >
-                    {/* Featured Badge */}
-                    {project.featured && (
-                      <div className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 backdrop-blur-md">
-                        <FaStar className="text-yellow-500" size={14} />
-                        <span className="text-sm font-semibold text-yellow-500">
-                          Featured
-                        </span>
-                      </div>
+       {/* Projects Grid */}
+{projectsLoading ? (
+  <div className="py-20 text-center">
+    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+    <p className="mt-4 text-gray-400">Loading projects...</p>
+  </div>
+) : projectsError ? (
+  <div className="py-20 text-center text-red-400">{projectsError}</div>
+) : visibleProjects.length > 0 ? (
+  <>
+    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+      {visibleProjects.map((project, index) => (
+        <div
+          key={project.id}
+          className="group relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-lg transition-all duration-500 hover:-translate-y-3 hover:border-blue-500 hover:shadow-[0_0_40px_rgba(59,130,246,0.3)]"
+          style={{
+            animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+          }}
+        >
+          {/* Featured Badge */}
+          {project.featured && (
+            <div className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 backdrop-blur-md">
+              <FaStar className="text-yellow-500" size={14} />
+              <span className="text-sm font-semibold text-yellow-500">
+                Featured
+              </span>
+            </div>
+          )}
+
+          {/* Image */}
+          <div className="relative h-56 overflow-hidden">
+            <img
+              src={project.image}
+              alt={project.title}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            {/* Category & Date */}
+            <div className="mb-4 flex items-center justify-between text-sm">
+              <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1 text-blue-400">
+                {project.category}
+              </span>
+              <span className="text-gray-400">
+                {new Date(project.date).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="mb-3 text-2xl font-bold text-white transition-colors group-hover:text-blue-400">
+              {project.title}
+            </h3>
+
+            {/* Description */}
+            <p className="mb-5 leading-7 text-gray-400">
+              {project.description}
+            </p>
+
+            {/* Technologies */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              {project.technologies.map((tech) => (
+                <span
+                  key={tech}
+                  className={`rounded-lg border px-3 py-1 text-xs font-medium transition-all duration-300 hover:scale-110 ${getTechnologyColor(
+                    tech
+                  )}`}
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
+
+            {/* ✅ Links — Smart Frontend + Backend Layout */}
+            <div className="space-y-4">
+              {/* Frontend Links */}
+              {(project.githubLink || project.liveLink) && (
+                <div>
+                  {(project.backendGithubLink || project.backendLiveLink) && (
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
+                      🎨 Frontend
+                    </p>
+                  )}
+                  <div className="flex gap-4">
+                    {project.githubLink && (
+                      <a
+                        href={project.githubLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-800 py-3 font-semibold text-white transition-all duration-300 hover:border-blue-500 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-600/30"
+                      >
+                        <FaGithub size={18} />
+                        <span>Code</span>
+                      </a>
                     )}
 
-                    {/* Image */}
-                    <div className="relative h-56 overflow-hidden">
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6">
-                      {/* Category & Date */}
-                      <div className="mb-4 flex items-center justify-between text-sm">
-                        <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1 text-blue-400">
-                          {project.category}
-                        </span>
-                        <span className="text-gray-400">
-                          {new Date(project.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="mb-3 text-2xl font-bold text-white transition-colors group-hover:text-blue-400">
-                        {project.title}
-                      </h3>
-
-                      {/* Description */}
-                      <p className="mb-5 leading-7 text-gray-400">
-                        {project.description}
-                      </p>
-
-                      {/* Technologies */}
-                      <div className="mb-6 flex flex-wrap gap-2">
-                        {project.technologies.map((tech) => (
-                          <span
-                            key={tech}
-                            className={`rounded-lg border px-3 py-1 text-xs font-medium transition-all duration-300 hover:scale-110 ${getTechnologyColor(
-                              tech
-                            )}`}
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Links */}
-                      <div className="flex gap-4">
-                        <a
-                          href={project.githubLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-800 py-3 font-semibold text-white transition-all duration-300 hover:border-blue-500 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-600/30"
-                        >
-                          <FaGithub size={18} />
-                          <span>Code</span>
-                        </a>
-
-                        <a
-                          href={project.liveLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-600/50"
-                        >
-                          <FaExternalLinkAlt size={16} />
-                          <span>Live Demo</span>
-                        </a>
-                      </div>
-                    </div>
+                    {project.liveLink && (
+                      <a
+                        href={project.liveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-600/50"
+                      >
+                        <FaExternalLinkAlt size={16} />
+                        <span>Live Demo</span>
+                      </a>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
 
-              {/* Load More Button */}
+              {/* Backend Links — only show if they exist */}
+              {(project.backendGithubLink || project.backendLiveLink) && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                    ⚙️ Backend
+                  </p>
+                  <div className="flex gap-4">
+                    {project.backendGithubLink && (
+                      <a
+                        href={project.backendGithubLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-800 py-3 font-semibold text-white transition-all duration-300 hover:border-emerald-500 hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-600/30"
+                      >
+                        <FaGithub size={18} />
+                        <span>Code</span>
+                      </a>
+                    )}
+
+                    {project.backendLiveLink && (
+                      <a
+                        href={project.backendLiveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-600/50"
+                      >
+                        <FaExternalLinkAlt size={16} />
+                        <span>Live API</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    
+                  {/* Load More Button */}
               {hasMore && (
                 <div className="mt-16 text-center">
                   <button
