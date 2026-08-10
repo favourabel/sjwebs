@@ -32,7 +32,7 @@ import {
 import Navbar from "./component/Navbar.jsx";
 
 // ─── Public Pages ───
-import Homepage from "./pages/Homepage.jsx";
+import HomePartOne from "./pages/HomePartOne.jsx";
 import Resume from "./pages/Resume.jsx";
 
 // ─── Admin Pages ───
@@ -134,7 +134,7 @@ export default function App() {
             🌐 PUBLIC ROUTES (with Navbar)
         ───────────────────────────────── */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<Homepage />} />
+          <Route path="/" element={<HomePartOne />} />
           <Route path="/resume" element={<Resume />} />
         </Route>
 
