@@ -6,6 +6,7 @@
    ============================================================================ */
 
 import { useState, useEffect, useRef } from "react";
+
 import {
   FaGithub,
   FaLinkedin,
@@ -25,109 +26,155 @@ import { HiArrowRight, HiCheckCircle, HiMapPin } from "react-icons/hi2";
 // ✅ Import shared data from Part One — no third file needed
 import { servicesData, contactCards } from "./HomePartOne";
 
+// ✅ Footer component
+import Footer from "../component/Footer";
+
 /* ============================================================================
-   SERVICE CARD COMPONENT
+   UI-ONLY HOOK — Scroll reveal entrance animations
    ============================================================================ */
-const ServiceCard = ({ service, index }) => {
+const useScrollReveal = (delay = 0) => {
+  const ref = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => {
-            setIsVisible(true);
-          }, index * 150);
+          setTimeout(() => setIsVisible(true), delay);
+          observer.disconnect();
         }
       },
       { threshold: 0.1 }
     );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
+    if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [index]);
+  }, [delay]);
 
+  return [ref, isVisible];
+};
+
+/* ============================================================================
+   SECTION HEADER COMPONENT (UI only)
+   ============================================================================ */
+const SectionHeader = ({ eyebrow, title, highlight, description }) => {
+  const [ref, isVisible] = useScrollReveal();
+
+  return (
+    <div
+      ref={ref}
+      className={`mb-16 text-center transition-all duration-1000 ease-out lg:mb-20 ${
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+      }`}
+    >
+      <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-blue-500/20 bg-blue-500/5 px-5 py-2.5 backdrop-blur-sm">
+        <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+        <span className="text-xs font-semibold uppercase tracking-[4px] text-blue-400">
+          {eyebrow}
+        </span>
+      </div>
+
+      <h2 className="text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">
+        {title}{" "}
+        <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">
+          {highlight}
+        </span>
+      </h2>
+
+      {description && (
+        <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-gray-400 sm:text-lg">
+          {description}
+        </p>
+      )}
+
+      <div className="mx-auto mt-8 flex items-center justify-center gap-3">
+        <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-500/50" />
+        <div className="h-2 w-2 rounded-full bg-blue-500" />
+        <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-500/50" />
+      </div>
+    </div>
+  );
+};
+
+/* ============================================================================
+   SERVICE CARD COMPONENT
+   ============================================================================ */
+const ServiceCard = ({ service, index }) => {
+  const [ref, isVisible] = useScrollReveal(index * 120);
+  const [hovered, setHovered] = useState(false);
   const IconComponent = service.icon;
 
   return (
     <div
-      ref={cardRef}
-      className={`group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 via-slate-800/50 to-slate-900/80 p-6 backdrop-blur-xl transition-all duration-700 ease-out sm:p-8 ${service.borderHover} hover:-translate-y-3 hover:scale-[1.02] hover:shadow-2xl ${
+      ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 via-slate-800/50 to-slate-900/80 p-7 backdrop-blur-xl transition-all duration-700 ease-out sm:p-8 ${service.borderHover} hover:-translate-y-3 hover:shadow-2xl ${
         isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
       }`}
       style={{
-        boxShadow: isVisible
-          ? "0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-          : "none",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 20px 60px ${service.glowColor}, 0 0 80px ${service.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)";
+        boxShadow: hovered
+          ? `0 25px 60px ${service.glowColor}, inset 0 1px 0 rgba(255,255,255,0.08)`
+          : "0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
+        transition:
+          "box-shadow 0.4s ease, transform 0.4s ease, opacity 0.7s ease",
       }}
     >
-      {/* Background Gradient Orb */}
-      <div
-        className={`absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br ${service.gradient} opacity-0 blur-[80px] transition-opacity duration-700 group-hover:opacity-30`}
-      />
-      <div
-        className={`absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br ${service.gradient} opacity-0 blur-[60px] transition-opacity duration-700 group-hover:opacity-20`}
-      />
-
-      {/* Top Gradient Line */}
+      {/* Top accent line */}
       <div
         className={`absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r ${service.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
       />
 
+      {/* Background glow orbs */}
+      <div
+        className={`absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br ${service.gradient} opacity-0 blur-[90px] transition-opacity duration-700 group-hover:opacity-25`}
+      />
+      <div
+        className={`absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-gradient-to-br ${service.gradient} opacity-0 blur-[70px] transition-opacity duration-700 group-hover:opacity-15`}
+      />
+
       {/* Icon */}
-      <div className="relative mb-5 sm:mb-6">
+      <div className="relative mb-6">
         <div
-          className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${service.iconBg} border border-white/[0.06] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 sm:h-16 sm:w-16`}
+          className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl ${service.iconBg} border border-white/[0.06] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6`}
         >
           <IconComponent
-            className={`${service.iconColor} transition-all duration-500 group-hover:scale-110`}
+            className={`${service.iconColor} transition-all duration-500`}
             size={28}
           />
         </div>
       </div>
 
       {/* Title */}
-      <h3 className="relative mb-3 text-lg font-bold text-white transition-colors duration-300 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 sm:mb-4 sm:text-xl lg:text-2xl">
+      <h3 className="relative mb-3 text-xl font-bold text-white transition-colors duration-300 group-hover:text-blue-100 lg:text-2xl">
         {service.title}
       </h3>
 
       {/* Description */}
-      <p className="relative mb-5 text-sm leading-relaxed text-gray-400 transition-colors duration-300 group-hover:text-gray-300 sm:mb-6 sm:text-base">
+      <p className="relative mb-5 text-sm leading-relaxed text-gray-400 transition-colors duration-300 group-hover:text-gray-300 sm:text-base">
         {service.description}
       </p>
 
       {/* Divider */}
-      <div className="relative mb-5 sm:mb-6">
+      <div className="relative mb-5">
         <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* Services Label */}
       <p
-        className={`relative mb-3 text-xs font-semibold uppercase tracking-[3px] sm:mb-4 sm:text-sm ${service.iconColor}`}
+        className={`relative mb-4 text-xs font-bold uppercase tracking-[3px] sm:text-sm ${service.iconColor}`}
       >
         Services Include
       </p>
 
       {/* Service Items */}
-      <ul className="relative space-y-2 sm:space-y-3">
+      <ul className="relative space-y-2.5">
         {service.services.map((item, i) => (
           <li
             key={i}
-            className="flex items-start gap-2 text-sm text-gray-400 transition-all duration-300 group-hover:text-gray-300 sm:gap-3 sm:text-base"
+            className="flex items-start gap-3 text-sm text-gray-400 transition-colors duration-300 group-hover:text-gray-300 sm:text-base"
           >
             <HiCheckCircle
-              className={`mt-0.5 flex-shrink-0 ${service.iconColor} transition-transform duration-300 group-hover:scale-110`}
+              className={`mt-0.5 flex-shrink-0 ${service.iconColor}`}
               size={16}
             />
             <span className="leading-relaxed">{item}</span>
@@ -135,7 +182,7 @@ const ServiceCard = ({ service, index }) => {
         ))}
       </ul>
 
-      {/* Bottom Gradient Line */}
+      {/* Bottom slide-in accent */}
       <div
         className={`absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r ${service.gradient} transition-all duration-700 group-hover:w-full`}
       />
@@ -147,24 +194,11 @@ const ServiceCard = ({ service, index }) => {
    CONTACT CARD COMPONENT
    ============================================================================ */
 const ContactCard = ({ card, index }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [ref, isVisible] = useScrollReveal(index * 150);
+  const [hovered, setHovered] = useState(false);
+
+  /* ── Original copy logic — preserved exactly ── */
   const [copied, setCopied] = useState(false);
-  const cardRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), index * 150);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, [index]);
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(card.rawValue);
@@ -179,69 +213,70 @@ const ContactCard = ({ card, index }) => {
 
   return (
     <div
-      ref={cardRef}
-      className={`group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 via-slate-800/50 to-slate-900/80 p-5 backdrop-blur-xl transition-all duration-700 ease-out sm:p-6 ${
-        card.borderHover
-      } hover:-translate-y-2 hover:scale-[1.02] ${
+      ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={`group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 via-slate-800/50 to-slate-900/80 p-5 backdrop-blur-xl transition-all duration-700 ease-out sm:p-6 ${card.borderHover} hover:-translate-y-2 ${
         isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
       }`}
       style={{
-        boxShadow:
-          "0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 20px 50px ${card.glowColor}, inset 0 1px 0 rgba(255,255,255,0.1)`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)";
+        boxShadow: hovered
+          ? `0 20px 50px ${card.glowColor}, inset 0 1px 0 rgba(255,255,255,0.08)`
+          : "0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
+        transition:
+          "box-shadow 0.4s ease, transform 0.4s ease, opacity 0.7s ease",
       }}
     >
-      {/* Glow Orb */}
+      {/* Top accent line */}
       <div
-        className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${card.gradient} opacity-0 blur-[70px] transition-opacity duration-700 group-hover:opacity-30`}
+        className={`absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r ${card.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
       />
 
-      <div className="relative flex items-start gap-3 sm:gap-4">
+      {/* Glow Orb */}
+      <div
+        className={`absolute -right-12 -top-12 h-36 w-36 rounded-full bg-gradient-to-br ${card.gradient} opacity-0 blur-[70px] transition-opacity duration-700 group-hover:opacity-25`}
+      />
+
+      <div className="relative flex items-start gap-4">
         {/* Icon */}
         <div
-          className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${card.iconBg} border border-white/[0.06] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 sm:h-14 sm:w-14`}
+          className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl ${card.iconBg} border border-white/[0.06] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6`}
         >
           <IconComponent className={`${card.iconColor}`} size={20} />
         </div>
 
         {/* Info */}
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400 sm:text-sm">
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="text-xs font-bold uppercase tracking-[3px] text-gray-500">
             {card.type}
           </p>
-          <div className="mt-1 flex items-center gap-2">
-            <p className="truncate text-sm font-semibold text-white sm:text-base">
+          <div className="mt-1.5 flex items-center gap-2">
+            <p className="truncate text-sm font-bold text-white sm:text-base">
               {card.value}
             </p>
             <button
               onClick={handleCopy}
               aria-label={`Copy ${card.type}`}
-              className="flex-shrink-0 text-gray-500 transition-colors duration-300 hover:text-white"
+              className="flex-shrink-0 rounded-lg p-1 text-gray-600 transition-all duration-200 hover:bg-white/10 hover:text-white"
             >
               {copied ? (
-                <FaCheck className="text-green-400" size={14} />
+                <FaCheck className="text-green-400" size={12} />
               ) : (
-                <FaRegCopy size={14} />
+                <FaRegCopy size={12} />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Button */}
+      {/* Action Button */}
       <a
         href={card.href}
         target={card.isExternal ? "_blank" : undefined}
         rel={card.isExternal ? "noopener noreferrer" : undefined}
-        className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${card.btnGradient} py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:mt-5 sm:py-3 sm:text-base`}
+        className={`mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r ${card.btnGradient} py-3 text-sm font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:mt-5`}
       >
-        <IconComponent size={16} />
+        <IconComponent size={15} />
         <span>{card.buttonText}</span>
       </a>
     </div>
@@ -252,6 +287,7 @@ const ContactCard = ({ card, index }) => {
    BACK TO TOP COMPONENT
    ============================================================================ */
 const BackToTop = () => {
+  /* ── Original scroll progress logic — preserved exactly ── */
   const [visible, setVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -274,7 +310,7 @@ const BackToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Circle progress math
+  /* ── Original circle math — preserved exactly ── */
   const radius = 26;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (scrollProgress / 100) * circumference;
@@ -283,7 +319,7 @@ const BackToTop = () => {
     <button
       onClick={scrollToTop}
       aria-label="Back to top"
-      className={`group fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-600/60 sm:bottom-8 sm:right-8 sm:h-14 sm:w-14 ${
+      className={`group fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white shadow-xl shadow-blue-600/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-600/60 ${
         visible
           ? "translate-y-0 opacity-100"
           : "pointer-events-none translate-y-10 opacity-0"
@@ -301,8 +337,8 @@ const BackToTop = () => {
           cy="28"
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.2)"
-          strokeWidth="2"
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth="2.5"
         />
         <circle
           cx="28"
@@ -310,7 +346,7 @@ const BackToTop = () => {
           r={radius}
           fill="none"
           stroke="white"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -329,110 +365,40 @@ const BackToTop = () => {
    SERVICES SECTION
    ============================================================================ */
 const ServicesSection = () => {
-  const [headerVisible, setHeaderVisible] = useState(false);
-  const [ctaVisible, setCtaVisible] = useState(false);
-  const headerRef = useRef(null);
-  const ctaRef = useRef(null);
-
-  useEffect(() => {
-    const headerObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHeaderVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const ctaObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCtaVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (headerRef.current) headerObserver.observe(headerRef.current);
-    if (ctaRef.current) ctaObserver.observe(ctaRef.current);
-
-    return () => {
-      headerObserver.disconnect();
-      ctaObserver.disconnect();
-    };
-  }, []);
+  const [ctaRef, ctaVisible] = useScrollReveal();
 
   return (
     <section
       id="services"
-      className="relative overflow-hidden bg-[#020617] px-4 py-20 text-white sm:px-6 sm:py-24 lg:py-28"
+      className="relative overflow-hidden bg-[#020617] px-6 py-24 text-white lg:py-32"
     >
-      {/* Background Elements */}
-      <div className="absolute left-0 top-0 h-full w-full">
-        <div className="absolute right-[5%] top-[10%] h-[300px] w-[300px] rounded-full bg-blue-600/[0.04] blur-[150px] sm:h-[500px] sm:w-[500px]" />
-        <div className="absolute bottom-[10%] left-[5%] h-[250px] w-[250px] rounded-full bg-purple-600/[0.04] blur-[150px] sm:h-[400px] sm:w-[400px]" />
-        <div className="absolute left-[50%] top-[50%] h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-600/[0.03] blur-[180px] sm:h-[600px] sm:w-[600px]" />
+      {/* Background glows */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute right-[5%] top-[10%] h-[400px] w-[400px] rounded-full bg-blue-600/[0.04] blur-[150px]" />
+        <div className="absolute bottom-[10%] left-[5%] h-[350px] w-[350px] rounded-full bg-purple-600/[0.04] blur-[150px]" />
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-600/[0.025] blur-[180px]" />
       </div>
 
-      {/* Grid Pattern Overlay */}
+      {/* Subtle grid */}
       <div
-        className="absolute inset-0 opacity-[0.015]"
+        className="pointer-events-none absolute inset-0 opacity-[0.015]"
         style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "64px 64px",
         }}
       />
 
       <div className="relative mx-auto max-w-7xl">
-        {/* Section Header */}
-        <div
-          ref={headerRef}
-          className={`mb-14 text-center transition-all duration-1000 ease-out sm:mb-16 lg:mb-20 ${
-            headerVisible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-10 opacity-0"
-          }`}
-        >
-          {/* Badge */}
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-4 py-2 backdrop-blur-sm sm:mb-6 sm:gap-3 sm:px-6 sm:py-3">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-            <span className="text-xs font-medium uppercase tracking-[3px] text-blue-400 sm:text-sm sm:tracking-[4px]">
-              What I Offer
-            </span>
-          </div>
-
-          {/* Title */}
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl">
-            My{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">
-              Services
-            </span>
-          </h2>
-
-          {/* Subtitle */}
-          <h3 className="mx-auto mt-4 max-w-2xl text-lg font-medium text-gray-300 sm:mt-6 sm:text-xl md:text-2xl">
-            Transforming Ideas Into Modern Digital Solutions
-          </h3>
-
-          {/* Description */}
-          <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-gray-400 sm:mt-6 sm:text-base sm:leading-8 md:text-lg">
-            I build scalable, user-focused, and high-performing digital products
-            that help businesses establish a strong online presence, streamline
-            operations, and deliver exceptional user experiences. From
-            responsive websites to full-stack applications and mobile solutions,
-            I create technology that drives results.
-          </p>
-
-          {/* Decorative Line */}
-          <div className="mx-auto mt-8 flex items-center justify-center gap-3 sm:mt-10">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-blue-500/50 sm:w-16" />
-            <div className="h-2 w-2 rounded-full bg-blue-500" />
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-blue-500/50 sm:w-16" />
-          </div>
-        </div>
+        <SectionHeader
+          eyebrow="What I Offer"
+          title="My"
+          highlight="Services"
+          description="I build scalable, user-focused, and high-performing digital products that help businesses establish a strong online presence, streamline operations, and deliver exceptional user experiences. From responsive websites to full-stack applications and mobile solutions, I create technology that drives results."
+        />
 
         {/* Services Grid */}
-        <div className="grid gap-6 sm:gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {servicesData.map((service, index) => (
             <ServiceCard key={service.id} service={service} index={index} />
           ))}
@@ -441,43 +407,41 @@ const ServicesSection = () => {
         {/* CTA Section */}
         <div
           ref={ctaRef}
-          className={`mt-16 transition-all duration-1000 ease-out sm:mt-20 lg:mt-24 ${
+          className={`mt-20 transition-all duration-1000 ease-out lg:mt-24 ${
             ctaVisible
               ? "translate-y-0 opacity-100"
               : "translate-y-10 opacity-0"
           }`}
         >
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/90 via-slate-800/50 to-slate-900/90 p-8 text-center backdrop-blur-xl sm:p-12 md:p-16">
-            {/* CTA Background Effects */}
-            <div className="absolute -left-20 -top-20 h-60 w-60 rounded-full bg-blue-600/10 blur-[100px]" />
-            <div className="absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-purple-600/10 blur-[100px]" />
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/90 via-slate-800/50 to-slate-900/90 p-10 text-center backdrop-blur-xl sm:p-14 md:p-16">
+            {/* CTA glows */}
+            <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-600/10 blur-[100px]" />
+            <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-purple-600/8 blur-[100px]" />
             <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <div className="absolute bottom-0 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
-            {/* CTA Content */}
             <div className="relative">
-              {/* Emoji */}
-              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-blue-500/20 bg-blue-500/10 text-3xl sm:mb-6 sm:h-20 sm:w-20 sm:text-4xl">
+              <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl border border-blue-500/20 bg-blue-500/10 text-4xl shadow-lg">
                 🚀
               </div>
 
-              <h3 className="mb-3 text-2xl font-bold sm:mb-4 sm:text-3xl md:text-4xl lg:text-5xl">
+              <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl md:text-5xl">
                 Let's Build Something{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                   Great Together
                 </span>
               </h3>
 
-              <p className="mx-auto mb-8 max-w-2xl text-sm leading-7 text-gray-400 sm:mb-10 sm:text-base sm:leading-8 md:text-lg">
+              <p className="mx-auto mb-10 max-w-2xl text-base leading-8 text-gray-400 sm:text-lg">
                 Have a project in mind or need a dedicated developer? I'm
                 always excited to collaborate on innovative ideas and bring your
                 vision to life with modern technology.
               </p>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
+              <div className="flex flex-wrap items-center justify-center gap-4">
                 <a
                   href="#contact"
-                  className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-600/40 sm:gap-3 sm:px-10 sm:py-5 sm:text-lg"
+                  className="group inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 px-10 py-4 text-base font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-600/40 sm:px-12 sm:py-5 sm:text-lg"
                 >
                   <span>Start a Project</span>
                   <HiArrowRight
@@ -488,23 +452,18 @@ const ServicesSection = () => {
               </div>
 
               {/* Trust Indicators */}
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500 sm:mt-12 sm:gap-8 sm:text-sm">
-                <div className="flex items-center gap-2">
-                  <HiCheckCircle className="text-green-500" size={16} />
-                  <span>Fast Delivery</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <HiCheckCircle className="text-green-500" size={16} />
-                  <span>Clean Code</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <HiCheckCircle className="text-green-500" size={16} />
-                  <span>24/7 Support</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <HiCheckCircle className="text-green-500" size={16} />
-                  <span>Modern Tech Stack</span>
-                </div>
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+                {[
+                  "Fast Delivery",
+                  "Clean Code",
+                  "24/7 Support",
+                  "Modern Tech Stack",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <HiCheckCircle className="text-green-500" size={16} />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -518,14 +477,10 @@ const ServicesSection = () => {
    CONTACT SECTION
    ============================================================================ */
 const ContactSection = () => {
-  const [headerVisible, setHeaderVisible] = useState(false);
-  const [formVisible, setFormVisible] = useState(false);
-  const [ctaVisible, setCtaVisible] = useState(false);
+  const [formRef, formVisible] = useScrollReveal(200);
+  const [ctaRef, ctaVisible] = useScrollReveal();
 
-  const headerRef = useRef(null);
-  const formRef = useRef(null);
-  const ctaRef = useRef(null);
-
+  /* ── Original form state & logic — preserved exactly ── */
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -534,30 +489,6 @@ const ContactSection = () => {
   });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
-
-  useEffect(() => {
-    const makeObserver = (setter) =>
-      new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) setter(true);
-        },
-        { threshold: 0.1 }
-      );
-
-    const headerObs = makeObserver(setHeaderVisible);
-    const formObs = makeObserver(setFormVisible);
-    const ctaObs = makeObserver(setCtaVisible);
-
-    if (headerRef.current) headerObs.observe(headerRef.current);
-    if (formRef.current) formObs.observe(formRef.current);
-    if (ctaRef.current) ctaObs.observe(ctaRef.current);
-
-    return () => {
-      headerObs.disconnect();
-      formObs.disconnect();
-      ctaObs.disconnect();
-    };
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -588,10 +519,7 @@ const ContactSection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
-
     setStatus("loading");
-
-    // Simulate sending (replace with your API/email service later)
     setTimeout(() => {
       try {
         setStatus("success");
@@ -604,131 +532,113 @@ const ContactSection = () => {
     }, 1800);
   };
 
+  /* ── Input base styles ── */
   const inputBase =
-    "w-full rounded-2xl border bg-slate-900/50 py-3 px-4 text-sm text-white placeholder-gray-500 backdrop-blur-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:py-4 sm:px-5 sm:text-base";
+    "w-full rounded-2xl border bg-slate-900/60 py-3.5 px-5 text-sm text-white placeholder-gray-600 backdrop-blur-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:py-4 sm:text-base";
+
+  const inputBorder = (field) =>
+    errors[field]
+      ? "border-red-500/50 focus:border-red-500"
+      : "border-white/10 focus:border-blue-500";
 
   return (
     <section
       id="contact"
-      className="relative overflow-hidden bg-[#020617] px-4 py-20 text-white sm:px-6 sm:py-24 lg:py-28"
+      className="relative overflow-hidden bg-[#020617] px-6 py-24 text-white lg:py-32"
     >
-      {/* Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute right-[5%] top-[10%] h-[300px] w-[300px] rounded-full bg-blue-600/[0.04] blur-[150px] sm:h-[500px] sm:w-[500px]" />
-        <div className="absolute bottom-[10%] left-[5%] h-[250px] w-[250px] rounded-full bg-purple-600/[0.04] blur-[150px] sm:h-[400px] sm:w-[400px]" />
+      {/* Background glows */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute right-[5%] top-[10%] h-[400px] w-[400px] rounded-full bg-blue-600/[0.04] blur-[150px]" />
+        <div className="absolute bottom-[10%] left-[5%] h-[350px] w-[350px] rounded-full bg-purple-600/[0.04] blur-[150px]" />
       </div>
 
-      {/* Grid Pattern */}
+      {/* Subtle grid */}
       <div
-        className="absolute inset-0 opacity-[0.015]"
+        className="pointer-events-none absolute inset-0 opacity-[0.015]"
         style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "64px 64px",
         }}
       />
 
       <div className="relative mx-auto max-w-7xl">
-        {/* Section Header */}
-        <div
-          ref={headerRef}
-          className={`mb-14 text-center transition-all duration-1000 ease-out sm:mb-16 lg:mb-20 ${
-            headerVisible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-10 opacity-0"
-          }`}
-        >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-4 py-2 backdrop-blur-sm sm:mb-6 sm:gap-3 sm:px-6 sm:py-3">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-            <span className="text-xs font-medium uppercase tracking-[3px] text-blue-400 sm:text-sm sm:tracking-[4px]">
-              Get In Touch
-            </span>
-          </div>
-
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl">
-            Let's Build Something{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">
-              Great Together
-            </span>
-          </h2>
-
-          <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-gray-400 sm:mt-6 sm:text-base sm:leading-8 md:text-lg">
-            I'm always open to discussing new opportunities, freelance
-            projects, collaborations, and innovative ideas. Whether you're a
-            recruiter looking for talent, a business seeking digital solutions,
-            or a client with a project in mind, I'd love to hear from you.
-          </p>
-
-          <div className="mx-auto mt-8 flex items-center justify-center gap-3 sm:mt-10">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-blue-500/50 sm:w-16" />
-            <div className="h-2 w-2 rounded-full bg-blue-500" />
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-blue-500/50 sm:w-16" />
-          </div>
-        </div>
+        <SectionHeader
+          eyebrow="Get In Touch"
+          title="Let's Build Something"
+          highlight="Great Together"
+          description="I'm always open to discussing new opportunities, freelance projects, collaborations, and innovative ideas. Whether you're a recruiter looking for talent, a business seeking digital solutions, or a client with a project in mind, I'd love to hear from you."
+        />
 
         {/* Split Layout */}
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-          {/* LEFT SIDE — Info */}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+
+          {/* ── LEFT — Contact Info ── */}
           <div>
-            <h3 className="text-2xl font-bold sm:text-3xl">
-              Contact <span className="text-blue-500">Information</span>
+            <h3 className="text-2xl font-extrabold sm:text-3xl">
+              Contact{" "}
+              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+                Information
+              </span>
             </h3>
-            <p className="mt-3 text-sm leading-7 text-gray-400 sm:mt-4 sm:text-base sm:leading-8">
+            <p className="mt-3 text-base leading-8 text-gray-400">
               Reach out through any of these channels. I typically respond
               within 24 hours. Let's turn your ideas into reality.
             </p>
 
-            {/* Location strip */}
-            <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-slate-900/50 px-4 py-2 backdrop-blur-lg sm:mt-6 sm:gap-3 sm:px-5 sm:py-3">
-              <HiMapPin className="text-blue-400" size={18} />
-              <span className="text-sm text-gray-300 sm:text-base">
+            {/* Availability Badge */}
+            <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-slate-900/60 px-5 py-3 backdrop-blur-lg">
+              <div className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+              </div>
+              <HiMapPin className="text-blue-400" size={16} />
+              <span className="text-sm font-medium text-gray-300">
                 Available for Remote Work Worldwide
               </span>
             </div>
 
             {/* Contact Cards */}
-            <div className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
+            <div className="mt-7 space-y-4">
               {contactCards.map((card, index) => (
                 <ContactCard key={card.id} card={card} index={index} />
               ))}
             </div>
 
-            {/* Socials */}
-            <div className="mt-6 sm:mt-8">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400 sm:mb-4 sm:text-sm">
-                Connect with me
+            {/* Social Links */}
+            <div className="mt-8">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[3px] text-gray-500">
+                Connect With Me
               </p>
-              <div className="flex gap-3 sm:gap-4">
-                <a
-                  href="#"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-slate-900/50 text-gray-300 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:text-white sm:h-12 sm:w-12"
-                >
-                  <FaGithub size={18} />
-                </a>
-                <a
-                  href="#"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-slate-900/50 text-gray-300 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:text-white sm:h-12 sm:w-12"
-                >
-                  <FaLinkedin size={18} />
-                </a>
-                <a
-                  href="mailto:favourabel150@gmail.com"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-slate-900/50 text-gray-300 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:text-white sm:h-12 sm:w-12"
-                >
-                  <FaEnvelope size={18} />
-                </a>
-                <a
-                  href="https://wa.me/2349130593550"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-slate-900/50 text-gray-300 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:text-white sm:h-12 sm:w-12"
-                >
-                  <FaWhatsapp size={18} />
-                </a>
+              <div className="flex gap-3">
+                {[
+                  { icon: FaGithub, href: "#" },
+                  { icon: FaLinkedin, href: "#" },
+                  {
+                    icon: FaEnvelope,
+                    href: "mailto:favourabel150@gmail.com",
+                  },
+                  {
+                    icon: FaWhatsapp,
+                    href: "https://wa.me/2349130593550",
+                    external: true,
+                  },
+                ].map(({ icon: Icon, href, external }, i) => (
+                  <a
+                    key={i}
+                    href={href}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noopener noreferrer" : undefined}
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-slate-900/60 text-gray-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-blue-600/20 hover:text-white"
+                  >
+                    <Icon size={18} />
+                  </a>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* RIGHT SIDE — Form */}
+          {/* ── RIGHT — Contact Form ── */}
           <div
             ref={formRef}
             className={`transition-all duration-1000 ease-out ${
@@ -737,38 +647,41 @@ const ContactSection = () => {
                 : "translate-y-10 opacity-0"
             }`}
           >
-            <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/90 via-slate-800/50 to-slate-900/90 p-6 backdrop-blur-xl sm:p-8 md:p-10">
-              {/* Top Glow Line */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/90 via-slate-800/50 to-slate-900/90 p-7 backdrop-blur-xl sm:p-9 md:p-10">
+              {/* Decorative lines */}
               <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
-              {/* Glow Orbs */}
-              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-600/10 blur-[80px]" />
-              <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-purple-600/10 blur-[80px]" />
+              <div className="absolute bottom-0 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+
+              {/* Glow orbs */}
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-600/10 blur-[90px]" />
+              <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-purple-600/8 blur-[90px]" />
 
               <div className="relative">
-                <h3 className="mb-2 text-xl font-bold sm:text-2xl">
+                <h3 className="mb-1.5 text-2xl font-extrabold">
                   Send Me a Message
                 </h3>
-                <p className="mb-6 text-sm text-gray-400 sm:mb-8 sm:text-base">
+                <p className="mb-7 text-sm text-gray-500">
                   Fill out the form below and I'll get back to you shortly.
                 </p>
 
+                {/* ── FORM (original logic — zero changes) ── */}
                 <form
                   onSubmit={handleSubmit}
                   noValidate
-                  className="space-y-4 sm:space-y-5"
+                  className="space-y-5"
                 >
                   {/* Name */}
                   <div>
                     <label
                       htmlFor="name"
-                      className="mb-2 block text-sm font-medium text-gray-300"
+                      className="mb-2 block text-sm font-bold text-gray-300"
                     >
                       Full Name
                     </label>
                     <div className="relative">
                       <FaUser
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 sm:left-5"
-                        size={14}
+                        className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600"
+                        size={13}
                       />
                       <input
                         id="name"
@@ -777,15 +690,12 @@ const ContactSection = () => {
                         value={formData.name}
                         onChange={handleChange}
                         placeholder="John Doe"
-                        className={`${inputBase} pl-11 sm:pl-12 ${
-                          errors.name
-                            ? "border-red-500/60 focus:border-red-500"
-                            : "border-white/10 focus:border-blue-500"
-                        }`}
+                        className={`${inputBase} ${inputBorder("name")} pl-12`}
                       />
                     </div>
                     {errors.name && (
-                      <p className="mt-1.5 text-xs text-red-400 sm:text-sm">
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                        <FaTimes size={10} />
                         {errors.name}
                       </p>
                     )}
@@ -795,14 +705,14 @@ const ContactSection = () => {
                   <div>
                     <label
                       htmlFor="email"
-                      className="mb-2 block text-sm font-medium text-gray-300"
+                      className="mb-2 block text-sm font-bold text-gray-300"
                     >
                       Email Address
                     </label>
                     <div className="relative">
                       <FaEnvelope
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 sm:left-5"
-                        size={14}
+                        className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600"
+                        size={13}
                       />
                       <input
                         id="email"
@@ -811,15 +721,12 @@ const ContactSection = () => {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="john@example.com"
-                        className={`${inputBase} pl-11 sm:pl-12 ${
-                          errors.email
-                            ? "border-red-500/60 focus:border-red-500"
-                            : "border-white/10 focus:border-blue-500"
-                        }`}
+                        className={`${inputBase} ${inputBorder("email")} pl-12`}
                       />
                     </div>
                     {errors.email && (
-                      <p className="mt-1.5 text-xs text-red-400 sm:text-sm">
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                        <FaTimes size={10} />
                         {errors.email}
                       </p>
                     )}
@@ -829,14 +736,14 @@ const ContactSection = () => {
                   <div>
                     <label
                       htmlFor="subject"
-                      className="mb-2 block text-sm font-medium text-gray-300"
+                      className="mb-2 block text-sm font-bold text-gray-300"
                     >
                       Subject
                     </label>
                     <div className="relative">
                       <FaTag
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 sm:left-5"
-                        size={14}
+                        className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600"
+                        size={13}
                       />
                       <input
                         id="subject"
@@ -845,15 +752,12 @@ const ContactSection = () => {
                         value={formData.subject}
                         onChange={handleChange}
                         placeholder="Project Inquiry / Job Opportunity"
-                        className={`${inputBase} pl-11 sm:pl-12 ${
-                          errors.subject
-                            ? "border-red-500/60 focus:border-red-500"
-                            : "border-white/10 focus:border-blue-500"
-                        }`}
+                        className={`${inputBase} ${inputBorder("subject")} pl-12`}
                       />
                     </div>
                     {errors.subject && (
-                      <p className="mt-1.5 text-xs text-red-400 sm:text-sm">
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                        <FaTimes size={10} />
                         {errors.subject}
                       </p>
                     )}
@@ -863,14 +767,14 @@ const ContactSection = () => {
                   <div>
                     <label
                       htmlFor="message"
-                      className="mb-2 block text-sm font-medium text-gray-300"
+                      className="mb-2 block text-sm font-bold text-gray-300"
                     >
                       Message
                     </label>
                     <div className="relative">
                       <FaRegCommentDots
-                        className="absolute left-4 top-4 text-gray-500 sm:left-5 sm:top-5"
-                        size={14}
+                        className="absolute left-5 top-4 text-gray-600 sm:top-5"
+                        size={13}
                       />
                       <textarea
                         id="message"
@@ -879,15 +783,12 @@ const ContactSection = () => {
                         value={formData.message}
                         onChange={handleChange}
                         placeholder="Tell me about your project or opportunity..."
-                        className={`${inputBase} resize-none pl-11 pt-3 sm:pl-12 sm:pt-4 ${
-                          errors.message
-                            ? "border-red-500/60 focus:border-red-500"
-                            : "border-white/10 focus:border-blue-500"
-                        }`}
+                        className={`${inputBase} ${inputBorder("message")} resize-none pl-12 pt-3.5 sm:pt-4`}
                       />
                     </div>
                     {errors.message && (
-                      <p className="mt-1.5 text-xs text-red-400 sm:text-sm">
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                        <FaTimes size={10} />
                         {errors.message}
                       </p>
                     )}
@@ -895,25 +796,25 @@ const ContactSection = () => {
 
                   {/* Success / Error Messages */}
                   {status === "success" && (
-                    <div className="flex items-center gap-3 rounded-2xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400 sm:px-5 sm:py-4 sm:text-base">
-                      <FaCheck size={16} />
+                    <div className="flex items-center gap-3 rounded-2xl border border-green-500/25 bg-green-500/8 px-5 py-4 text-sm text-green-400">
+                      <FaCheck size={14} className="flex-shrink-0" />
                       <span>
                         Message sent successfully! I'll get back to you soon.
                       </span>
                     </div>
                   )}
                   {status === "error" && (
-                    <div className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 sm:px-5 sm:py-4 sm:text-base">
-                      <FaTimes size={16} />
+                    <div className="flex items-center gap-3 rounded-2xl border border-red-500/25 bg-red-500/8 px-5 py-4 text-sm text-red-400">
+                      <FaTimes size={14} className="flex-shrink-0" />
                       <span>Something went wrong. Please try again.</span>
                     </div>
                   )}
 
-                  {/* Submit */}
+                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={status === "loading"}
-                    className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-base font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/40 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-3 sm:py-4 sm:text-lg"
+                    className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 py-4 text-base font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-600/40 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {status === "loading" ? (
                       <>
@@ -924,7 +825,7 @@ const ContactSection = () => {
                       <>
                         <FaPaperPlane
                           className="transition-transform duration-300 group-hover:translate-x-1"
-                          size={16}
+                          size={15}
                         />
                         <span>Send Message</span>
                       </>
@@ -939,30 +840,31 @@ const ContactSection = () => {
         {/* CTA Section */}
         <div
           ref={ctaRef}
-          className={`mt-16 transition-all duration-1000 ease-out sm:mt-20 lg:mt-24 ${
+          className={`mt-20 transition-all duration-1000 ease-out lg:mt-24 ${
             ctaVisible
               ? "translate-y-0 opacity-100"
               : "translate-y-10 opacity-0"
           }`}
         >
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/90 via-slate-800/50 to-slate-900/90 p-8 text-center backdrop-blur-xl sm:p-12 md:p-16">
-            <div className="absolute -left-20 -top-20 h-60 w-60 rounded-full bg-blue-600/10 blur-[100px]" />
-            <div className="absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-purple-600/10 blur-[100px]" />
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-slate-900/90 via-slate-800/50 to-slate-900/90 p-10 text-center backdrop-blur-xl sm:p-14 md:p-16">
+            <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-600/10 blur-[100px]" />
+            <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-purple-600/8 blur-[100px]" />
             <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <div className="absolute bottom-0 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
             <div className="relative">
-              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-blue-500/20 bg-blue-500/10 text-3xl sm:mb-6 sm:h-20 sm:w-20 sm:text-4xl">
+              <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl border border-blue-500/20 bg-blue-500/10 text-4xl shadow-lg">
                 💡
               </div>
 
-              <h3 className="mb-3 text-2xl font-bold sm:mb-4 sm:text-3xl md:text-4xl lg:text-5xl">
+              <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl md:text-5xl">
                 Ready to Bring Your Ideas to{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                   Life?
                 </span>
               </h3>
 
-              <p className="mx-auto mb-8 max-w-2xl text-sm leading-7 text-gray-400 sm:mb-10 sm:text-base sm:leading-8 md:text-lg">
+              <p className="mx-auto mb-10 max-w-2xl text-base leading-8 text-gray-400 sm:text-lg">
                 Let's collaborate to build modern, scalable, and impactful
                 digital experiences that deliver real results.
               </p>
@@ -972,7 +874,7 @@ const ContactSection = () => {
                   href="https://wa.me/2349130593550"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-600/40 sm:gap-3 sm:px-10 sm:py-5 sm:text-lg"
+                  className="group inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 px-10 py-4 text-base font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-600/40 sm:px-12 sm:py-5 sm:text-lg"
                 >
                   <span>Let's Talk</span>
                   <HiArrowRight
@@ -980,15 +882,14 @@ const ContactSection = () => {
                     size={20}
                   />
                 </a>
-
                 <a
                   href="mailto:favourabel150@gmail.com"
-                  className="group inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-white/[0.06] sm:gap-3 sm:px-10 sm:py-5 sm:text-lg"
+                  className="group inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-10 py-4 text-base font-bold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:bg-white/[0.08] sm:px-12 sm:py-5 sm:text-lg"
                 >
                   <span>Hire Me</span>
                   <FaEnvelope
                     className="transition-transform duration-300 group-hover:scale-110"
-                    size={16}
+                    size={15}
                   />
                 </a>
               </div>
@@ -1000,6 +901,7 @@ const ContactSection = () => {
   );
 };
 
+
 /* ============================================================================
    MAIN EXPORT
    ============================================================================ */
@@ -1008,9 +910,8 @@ export default function HomePartTwo() {
     <>
       <ServicesSection />
       <ContactSection />
+      <Footer />
       <BackToTop />
-
-      
     </>
   );
 }
