@@ -17,10 +17,10 @@ import {
 // ==================== RESUME FILES ====================
 const resumes = {
   mern: {
-    label: "MERN Stack Developer",
+    label: "Full-Stack / MERN Developer",
     icon: FaCode,
     file: "/mern-resume.pdf",
-    downloadName: "Osifo-Favour-MERN-Resume.pdf",
+    downloadName: "Osifo-Favour-FullStack-Developer-Resume.pdf",
     color: "blue",
   },
   reactNative: {
@@ -31,6 +31,7 @@ const resumes = {
     color: "purple",
   },
 };
+
 
 // ==================== RESUME COMPONENT ====================
 export default function Resume({ onBack }) {
